@@ -2,12 +2,36 @@ import requests
 import urllib
 import os
 
-settings={'file':'robots.txt', 'url':'mheducation.com', 'pre':'www.', 'websep':'/', 'http':'http://'}
+settings={
+          'file':'robots.txt',
+          'url':'cnn.com',
+          'pre':'www.',
+          'websep':'/',
+          'http':'http://', 
+          'https':'https://'
+          }
 path_list=[]
 removed_list=[]
 dfile = settings['file']
 found_list=[]
 nonexist=[]
+
+
+def roboclean():
+    '''If the lines inside the robots.txt file start with item in the list, the script will remove this line'''
+    cleaners=[ 
+              'Crawl-delay:',
+              '#',
+              'User-agent: Googlebot-Image',
+              'User-agent: Mediapartners-Google',
+              'User-Agent: *',
+              'User-agent:',
+              'User-agent:',
+              'Sitemap:'
+              ]
+    for clean in cleaners:
+        yield clean
+
 
 def cleanup(x):
     if os.path.exists(x):
@@ -15,40 +39,20 @@ def cleanup(x):
 
 def path_loader(dfile):
     loader = open( dfile, "r" )
-    remove1 ='Disallow:'
-    remove2 = 'User-agent:'
-    remove3 = 'Sitemap'
-    remove4 = 'Allow'
-    remove5 = 'User-Agent: *'
-    remove6 = 'User-agent: Mediapartners-Google'
-    remove7 = 'User-agent: Googlebot-Image'
-    remove8 = '#'
-    remove9 = 'Crawl-delay:'
-
+    trim1 ='Disallow:' 
+    trim2 = 'Allow'
     #Cleaning the list
     for line in loader:
-        if line == remove2:
-            new_line = line.replace(remove2,'')
-            path_list.append(new_line.strip())
-        elif line.startswith( remove3 ):
-            removed_list.append(line.strip())
-        elif line.startswith( remove2 ):
-            removed_list.append(line.strip())
-        elif line.startswith( remove4 ):
-            removed_list.append(line.strip())
-        elif line.startswith( remove5 ):
-            removed_list.append(line.strip())
-        elif line.startswith( remove6 ):
-            removed_list.append(line.strip())
-        elif line.startswith( remove7 ):
-            removed_list.append(line.strip())
-        elif line.startswith( remove8 ):
-            removed_list.append(line.strip())
-        elif line.startswith( remove9 ):
-            removed_list.append(line.strip())
-        else:
-            new_line = line.replace(remove1,'')
-            path_list.append(new_line.strip())
+        if line.startswith(trim1) or line.startswith(trim2):
+            new_line = line.replace(trim1,'') or line.replace(trim2,'')
+            if new_line in path_list:
+                pass
+            else:
+                path_list.append(new_line.strip())
+            for x in roboclean():
+                if line.startswith(x):
+                    removed_list.append(line.strip())
+
     loader.close()
        
 def robo_graber(proto,pre,baseurl,websep, file):
@@ -70,6 +74,7 @@ def url_graber(proto,pre,baseurl,  path):
     else:
         found_list.append(URL)
 
+    
 print "--- New fatch for:" , settings['url'] 
 print "--- fatching item:", settings['file']
 print "#" *20  
@@ -83,8 +88,12 @@ print "---DONE!"
 print "#" *20  
 print "---processing the file"
 path_loader(settings['file'])
-print "#" *20  
-print "--- Those are the lines that have been stripped out from the file"
+print "#" *20
+print "---Stripped lines:"
+if not removed_list:
+    print "No line stripped out"
+else:    
+    print "--- Those are the lines that have been stripped out from the file"
 for item in removed_list:
     print "striped from robots.txt:", item
 print "#" *20  
@@ -110,3 +119,6 @@ else:
         print url
 print "#" *20
 print "Done!"
+
+
+
