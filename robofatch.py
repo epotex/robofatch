@@ -1,6 +1,14 @@
 import requests 
+import requests.exceptions
 import urllib
 import os
+
+# User Agents
+
+Google_Bot = {
+    'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1',
+    'From': '+http://www.google.com/bot.html'
+}
 
 settings={
           'file':'robots.txt',
@@ -8,8 +16,10 @@ settings={
           'pre':'www.',
           'websep':'/',
           'http':'http://', 
-          'https':'https://'
+          'https':'https://',
+          'usebot': "no"
           }
+
 path_list=[]
 removed_list=[]
 dfile = settings['file']
@@ -67,13 +77,22 @@ def robo_graber(proto,pre,baseurl,websep, file):
     
 def url_graber(proto,pre,baseurl,  path):
     URL = proto + pre + baseurl +   path
-    req = requests.get(URL)
+    req = requests.get(URL, headers=Google_Bot )
     print "fetching:", URL
-    if not req.ok:
-        nonexist.append(path)
-    else:
-        found_list.append(URL)
+    try:
+        if not req.ok:
+            nonexist.append(path)
+        else:
+            found_list.append(URL)
+    except requests.exceptions.SSLError:
+        print "--- Switching to HTTPS"
+        URL = settings['https'] + pre + baseurl +   path
+        req = requests.get(URL ,  verify=False)
 
+        if not req.ok:
+            nonexist.append(path)
+        else:
+            found_list.append(URL)
     
 print "--- New fatch for:" , settings['url'] 
 print "--- fatching item:", settings['file']
@@ -119,6 +138,3 @@ else:
         print url
 print "#" *20
 print "Done!"
-
-
-
